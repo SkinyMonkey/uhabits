@@ -29,30 +29,22 @@ import org.isoron.platform.io.format
 import org.isoron.platform.io.getVersion
 import org.isoron.platform.io.migrateTo
 import org.isoron.platform.io.setVersion
-import org.isoron.platform.time.getToday
 import org.isoron.platform.time.setToday
 import org.isoron.uhabits.core.DATABASE_FILENAME
 import org.isoron.uhabits.core.DATABASE_VERSION
 import org.isoron.uhabits.core.commands.CommandRunner
-import org.isoron.uhabits.core.commands.CreateHabitCommand
-import org.isoron.uhabits.core.commands.CreateRepetitionCommand
 import org.isoron.uhabits.core.database.UnsupportedDatabaseVersionException
-import org.isoron.uhabits.core.models.Entry
 import org.isoron.uhabits.core.models.HabitList
-import org.isoron.uhabits.core.models.PaletteColor
 import org.isoron.uhabits.core.models.sqlite.SQLModelFactory
 import org.isoron.uhabits.core.preferences.Preferences
 import org.isoron.uhabits.core.tasks.CoroutineTaskRunner
 import org.isoron.uhabits.core.tasks.TaskRunner
 
-/** Swift-facing snapshot of one habit row. */
-class HabitItem(val id: Long, val name: String, val colorHex: String, val checkedToday: Boolean)
-
 /**
  * The iOS object graph, the counterpart of Android's HabitsApplication + HabitsApplicationComponent.
  * All calls are synchronous and meant for the main thread.
  * Commands run through [commandRunner] (async: main + IO dispatchers); listen to it to refresh the UI.
- * The older synchronous helpers below run commands directly and are kept for the simple list screen.
+ * The list screen's glue is [IosListHabits].
  *
  * @param resourceRoot bundled copy of uhabits-core/assets/main (contains migrations/)
  * @param userRoot writable directory for the database, e.g. the app's Documents folder
@@ -83,33 +75,5 @@ class IosAppGraph(resourceRoot: String, userRoot: String) {
         modelFactory = SQLModelFactory(db)
         habitList = modelFactory.buildHabitList()
         for (h in habitList) h.recompute()
-    }
-
-    fun habits(): List<HabitItem> {
-        setToday(todayFor(preferences)) // ponytail: refreshed on each read instead of a midnight timer
-        return habitList.filter { !it.isArchived }.map {
-            HabitItem(
-                id = it.id!!,
-                name = it.name,
-                colorHex = it.color.toCsvColor(),
-                checkedToday = it.computedEntries.get(getToday()).value == Entry.YES_MANUAL
-            )
-        }
-    }
-
-    fun toggleToday(habitId: Long) {
-        val habit = habitList.getById(habitId) ?: return
-        val today = getToday()
-        val entry = habit.computedEntries.get(today)
-        val next = Entry.nextToggleValue(entry.value, isSkipEnabled = false, areQuestionMarksEnabled = false)
-        CreateRepetitionCommand(habitList, habit, today, next, entry.notes).run()
-    }
-
-    fun createHabit(name: String, colorIndex: Int) {
-        val model = modelFactory.buildHabit().apply {
-            this.name = name
-            color = PaletteColor(colorIndex.coerceIn(0, 19))
-        }
-        CreateHabitCommand(modelFactory, habitList, model).run()
     }
 }
