@@ -25,15 +25,19 @@ struct DayButton: View {
                 }
             }
             .contentShape(Rectangle())
-            .onTapGesture { model.core.onClickDay(habitId: habit.id, day: day) }
-            .onLongPressGesture(minimumDuration: 0.4) {
-                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                model.core.onLongPressDay(habitId: habit.id, day: day)
-            }
+            // One exclusive gesture: separate onTapGesture/onLongPressGesture in a List row never fire the long press
+            .gesture(
+                LongPressGesture(minimumDuration: 0.4).onEnded { _ in
+                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                    model.core.onLongPressDay(habitId: habit.id, day: day)
+                }
+                .exclusively(before: TapGesture().onEnded { model.core.onClickDay(habitId: habit.id, day: day) })
+            )
             .accessibilityElement()
             .accessibilityLabel(accessibilityText)
             .accessibilityAddTraits(.isButton)
             .accessibilityAction(named: "Edit entry") { model.core.onEditDay(habitId: habit.id, day: day) }
+            .accessibilityIdentifier("day.\(habit.name).\(day)")
     }
 
     private var questionMarks: Bool { model.snapshot?.areQuestionMarksEnabled == true }
@@ -169,6 +173,7 @@ struct EntrySheet: View {
                     Section {
                         HStack {
                             TextField("Value", text: $number).keyboardType(.decimalPad).focused($focused)
+                                .accessibilityIdentifier("entry.value")
                                 .font(.title2.bold())
                             Text(request.unit).foregroundStyle(.secondary)
                         }
@@ -176,7 +181,9 @@ struct EntrySheet: View {
                 } else {
                     Section { checkmarkButtons }
                 }
-                Section("Notes") { TextField("Notes", text: $notes, axis: .vertical).lineLimit(2...5) }
+                Section("Notes") {
+                    TextField("Notes", text: $notes, axis: .vertical).lineLimit(2...5).accessibilityIdentifier("entry.notes")
+                }
             }
             .navigationTitle(request.habitName)
             .navigationBarTitleDisplayMode(.inline)
@@ -228,6 +235,8 @@ struct EntrySheet: View {
             .foregroundStyle(value == YES_MANUAL ? request.color.color : .secondary)
             .background(request.value == value ? Color(.systemGray5) : .clear, in: RoundedRectangle(cornerRadius: 10))
         }
+        .accessibilityLabel(title)
+        .accessibilityIdentifier("entry.\(title)")
     }
 
     private func save() {

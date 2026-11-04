@@ -49,6 +49,23 @@ final class HabitStore: ObservableObject {
 
     init() {
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].path
+        #if DEBUG
+        // Debug (UI tests): `-resetData` starts like a fresh install, without the database and preferences
+        if CommandLine.arguments.contains("-resetData") {
+            for f in (try? FileManager.default.contentsOfDirectory(atPath: docs)) ?? [] {
+                try? FileManager.default.removeItem(atPath: docs + "/" + f)
+            }
+            if let id = Bundle.main.bundleIdentifier { UserDefaults.standard.removePersistentDomain(forName: id) }
+            // The database and the widget copy of the preferences live in the shared app-group container
+            if let group = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: IosWidgets.companion.GROUP_ID) {
+                // only our database files: the container also holds system metadata that must survive
+                for f in (try? FileManager.default.contentsOfDirectory(atPath: group.path)) ?? [] where f.hasPrefix("uhabits.db") {
+                    try? FileManager.default.removeItem(atPath: group.path + "/" + f)
+                }
+            }
+            UserDefaults(suiteName: IosWidgets.companion.GROUP_ID)?.removePersistentDomain(forName: IosWidgets.companion.GROUP_ID)
+        }
+        #endif
         // The database lives in the app-group container, shared with the widgets (moved from Documents once)
         let groupId = IosWidgets.companion.GROUP_ID
         let root = IosWidgets.companion.sharedUserRoot(groupId: groupId, legacyRoot: docs)

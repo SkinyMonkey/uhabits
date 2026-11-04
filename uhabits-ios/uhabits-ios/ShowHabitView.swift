@@ -1,4 +1,5 @@
 import SwiftUI
+import class UhabitsCore.EntryRequest
 import class UhabitsCore.IosAppGraph
 import class UhabitsCore.IosShowHabit
 import class UhabitsCore.ShowHabitSnapshot
@@ -6,7 +7,7 @@ import class UhabitsCore.ShowHabitSnapshot
 /// Owns the Kotlin IosShowHabit (shared ShowHabitPresenter) and the latest snapshot.
 final class ShowHabitModel: ObservableObject {
     @Published private(set) var snap: ShowHabitSnapshot?
-    @Published var numberText: String?  // non-nil while the number prompt is shown
+    @Published var entry: EntryRequest?  // the list's entry sheet, for a history day
     private(set) var helper: IosShowHabit?
     private var dark = false
 
@@ -16,7 +17,7 @@ final class ShowHabitModel: ObservableObject {
             helper = IosShowHabit(
                 graph: graph, habitId: habitId,
                 onChange: { [weak self] in self?.reload(); onChanged() },
-                onNumberPrompt: { [weak self] value, _ in self?.numberText = String(format: "%g", value.doubleValue) }
+                onEntryPopup: { [weak self] in self?.entry = $0 }
             )
         }
         reload()
@@ -24,13 +25,6 @@ final class ShowHabitModel: ObservableObject {
 
     func setDark(_ dark: Bool) { self.dark = dark; reload() }
     func reload() { snap = helper?.snapshot(dark: dark) }
-
-    func submitNumber() {
-        if let text = numberText, let v = Double(text.replacingOccurrences(of: ",", with: ".")) {
-            helper?.submitNumber(value: v, notes: "")
-        }
-        numberText = nil
-    }
 
     deinit { helper?.close() }
 }
@@ -73,11 +67,6 @@ struct ShowHabitView: View {
             model.start(graph: store.graph, habitId: habitId, dark: scheme == .dark) { [weak store] in store?.reload() }
         }
         .onChange(of: scheme) { model.setDark($0 == .dark) }
-        .alert("Value", isPresented: Binding(get: { model.numberText != nil }, set: { if !$0 { model.numberText = nil } })) {
-            TextField("Value", text: Binding(get: { model.numberText ?? "" }, set: { model.numberText = $0 }))
-                .keyboardType(.decimalPad)
-            Button("Cancel", role: .cancel) { model.numberText = nil }
-            Button("Save") { model.submitNumber() }
-        }
+        .sheet(item: $model.entry) { EntrySheet(request: $0).presentationDetents([.medium]) }
     }
 }

@@ -56,6 +56,7 @@ struct EditHabitView: View {
                     HStack {
                         TextField(draft.isNumerical ? "Name (e.g. Run)" : "Name (e.g. Exercise)", text: $name)
                             .font(.headline)
+                            .accessibilityIdentifier("edit.name")
                         Button { pickingColor = true } label: {
                             Circle().fill(color).frame(width: 28, height: 28)
                         }
@@ -135,10 +136,12 @@ struct EditHabitView: View {
             HStack {
                 Text("Target")
                 TextField("e.g. 15", text: $target).keyboardType(.decimalPad).multilineTextAlignment(.trailing)
+                    .accessibilityIdentifier("edit.target")
             }
             HStack {
                 Text("Unit")
                 TextField("e.g. miles", text: $unit).multilineTextAlignment(.trailing)
+                    .accessibilityIdentifier("edit.unit")
             }
         }
     }

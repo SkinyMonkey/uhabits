@@ -52,6 +52,7 @@ import platform.CoreGraphics.CGBitmapContextCreateImage
 import platform.CoreGraphics.CGImageRelease
 import platform.UIKit.UIImage
 import platform.UIKit.UIImageOrientation
+import kotlin.math.roundToInt
 
 class ScorePoint(val unixSeconds: Double, val value: Double)
 class StreakItem(val start: String, val end: String, val length: Int)
@@ -94,13 +95,14 @@ class ShowHabitSnapshot(
 /**
  * Backs the iOS show-habit screen with the shared [ShowHabitPresenter].
  * [onChange] fires after any command (e.g. a toggle from the history chart) or spinner change;
- * [onNumberPrompt] asks Swift for a value, answered with [submitNumber]. Call [close] when done.
+ * [onEntryPopup] asks Swift to show the list's entry sheet (checkmark or number, plus notes) for a day.
+ * Call [close] when done.
  */
 class IosShowHabit(
     private val graph: IosAppGraph,
     habitId: Long,
     private val onChange: () -> Unit,
-    private val onNumberPrompt: (Double, String) -> Unit
+    private val onEntryPopup: (EntryRequest) -> Unit
 ) : ShowHabitPresenter.Screen, CommandRunner.Listener {
     val habit: Habit? = graph.habitList.getById(habitId)
     private val presenter = habit?.let {
@@ -108,7 +110,6 @@ class IosShowHabit(
     }
     private val formatter = IosLocalDateFormatter()
     private var history: HistoryChart? = null
-    private var pendingNumber: NumberPickerCallback? = null
 
     init {
         graph.commandRunner.addListener(this)
@@ -186,7 +187,7 @@ class IosShowHabit(
             notesIndicators = h.notesIndicators,
             theme = h.theme,
             today = h.today,
-            onDateClickedListener = tapListener
+            onDateClickedListener = presenter?.historyCardPresenter ?: object : OnDateClickedListener {}
         )
         history = chart
         return render(width, height, scale) { chart.draw(it) }
@@ -202,9 +203,17 @@ class IosShowHabit(
         return render(width, height, scale) { chart.draw(it) }
     }
 
-    /** [x], [y] in points within the last rendered history image. */
+    /**
+     * [x], [y] in points within the last rendered history image. Same as Android: with short-toggle on a
+     * tap toggles and a long press opens the entry popup, otherwise the reverse. Numerical habits always
+     * get the popup.
+     */
     fun tapHistory(x: Double, y: Double) {
         history?.onClick(x, y)
+    }
+
+    fun longPressHistory(x: Double, y: Double) {
+        history?.onLongClick(x, y)
     }
 
     fun setScoreSpinner(position: Int) {
@@ -217,20 +226,6 @@ class IosShowHabit(
             p.barCardPresenter.onNumericalSpinnerPosition(position)
         } else {
             p.barCardPresenter.onBoolSpinnerPosition(position)
-        }
-    }
-
-    fun submitNumber(value: Double, notes: String) {
-        pendingNumber?.onNumberPicked(value, notes)
-        pendingNumber = null
-    }
-
-    // A tap always takes the presenter's toggle path (Android: short press with short-toggle on,
-    // long press otherwise). Numerical habits get the number popup on either path.
-    private val tapListener = object : OnDateClickedListener {
-        override fun onDateShortPress(date: org.isoron.platform.time.LocalDate) {
-            val p = presenter?.historyCardPresenter ?: return
-            if (graph.preferences.isShortToggleEnabled) p.onDateShortPress(date) else p.onDateLongPress(date)
         }
     }
 
@@ -253,12 +248,23 @@ class IosShowHabit(
     override fun showHistoryEditorDialog(listener: OnDateClickedListener) {}
 
     override fun showNumberPopup(value: Double, notes: String, callback: NumberPickerCallback) {
-        pendingNumber = callback
-        onNumberPrompt(value, notes)
+        entryPopup((value * 1000).roundToInt(), notes, callback, null)
     }
 
-    // ponytail: unreachable, taps take the toggle path; add a checkmark dialog for notes editing
-    override fun showCheckmarkPopup(selectedValue: Int, notes: String, color: PaletteColor, callback: CheckMarkDialogCallback) {}
+    override fun showCheckmarkPopup(selectedValue: Int, notes: String, color: PaletteColor, callback: CheckMarkDialogCallback) {
+        entryPopup(selectedValue, notes, null, callback)
+    }
+
+    private fun entryPopup(value: Int, notes: String, number: NumberPickerCallback?, check: CheckMarkDialogCallback?) {
+        val h = habit ?: return
+        val p = graph.preferences
+        onEntryPopup(
+            EntryRequest(
+                h.name, HabitColor(h.color.paletteIndex), h.isNumerical, value, notes, h.unit,
+                p.isSkipEnabled, p.areQuestionMarksEnabled, number, check
+            )
+        )
+    }
 }
 
 private fun org.isoron.platform.gui.Color.toHex(): String {

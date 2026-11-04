@@ -83,7 +83,7 @@ struct OverviewCard: View {
 
     private func stat(_ value: String, _ label: String, _ color: Color) -> some View {
         VStack {
-            Text(value).font(.title3.bold()).foregroundStyle(color)
+            Text(value).font(.title3.bold()).foregroundStyle(color).accessibilityIdentifier("overview.\(label)")
             Text(label).font(.caption).foregroundStyle(Color(hex: s.mediumTextColor))
         }
         .frame(maxWidth: .infinity)
@@ -157,11 +157,12 @@ struct ScoreCard: View {
     }
 }
 
-/// Shows a core chart rendered to a UIImage at the view's width; `onTap` gets points in that image.
+/// Shows a core chart rendered to a UIImage at the view's width; `onTap`/`onLongPress` get points in that image.
 struct SharedChartImage: View {
     let height: CGFloat
     let render: (CGFloat, CGFloat, CGFloat) -> UIImage
     var onTap: ((CGPoint) -> Void)?
+    var onLongPress: ((CGPoint) -> Void)?
     @Environment(\.displayScale) private var scale
 
     var body: some View {
@@ -170,7 +171,12 @@ struct SharedChartImage: View {
                 .resizable()
                 .frame(width: geo.size.width, height: height)
             if let onTap {
-                image.contentShape(Rectangle()).onTapGesture(coordinateSpace: .local) { onTap($0) }
+                // The long press reports where the finger is lifted (LongPressGesture has no location)
+                let long = LongPressGesture(minimumDuration: 0.4)
+                    .sequenced(before: DragGesture(minimumDistance: 0, coordinateSpace: .local))
+                    .onEnded { if case .second(true, let drag?) = $0 { onLongPress?(drag.location) } }
+                image.contentShape(Rectangle())
+                    .gesture(long.exclusively(before: SpatialTapGesture(coordinateSpace: .local).onEnded { onTap($0.location) }))
             } else {
                 image
             }
@@ -203,7 +209,12 @@ struct HistoryCard: View {
                 helper.renderHistory(snapshot: s, width: w, height: h, scale: scale)
             }, onTap: { p in
                 helper.tapHistory(x: p.x, y: p.y)
+            }, onLongPress: { p in
+                helper.longPressHistory(x: p.x, y: p.y)
             })
+            .accessibilityElement()
+            .accessibilityLabel("History chart")
+            .accessibilityIdentifier("historyChart")
         }
     }
 }

@@ -58,7 +58,8 @@ struct HabitListView: View {
                         }
                 }
             }
-            .onMove(perform: model.snapshot?.isSortable == true ? move : nil)
+            // Only while editing: outside edit mode the row's drag lift swallows long presses (day toggle, context menu)
+            .onMove(perform: editing && model.snapshot?.isSortable == true ? move : nil)
         }
         .listStyle(.plain)
     }
@@ -281,6 +282,7 @@ struct HabitRowView<Actions: View>: View {
             .accessibilityElement(children: .combine)
             .accessibilityAddTraits(.isButton)
             .accessibilityHint("Opens the habit")
+            .accessibilityIdentifier("habit.\(habit.name)")
             ForEach(days(count, reversed: reversed), id: \.self) { d in
                 DayButton(habit: habit, day: d)
             }
