@@ -20,6 +20,7 @@
 package org.isoron.uhabits
 
 import kotlinx.coroutines.runBlocking
+import org.isoron.platform.gui.registerFonts
 import org.isoron.platform.io.IosDatabaseOpener
 import org.isoron.platform.io.IosFileOpener
 import org.isoron.platform.io.format
@@ -51,12 +52,14 @@ class HabitItem(val id: Long, val name: String, val colorHex: String, val checke
  * @param userRoot writable directory for the database, e.g. the app's Documents folder
  */
 class IosAppGraph(resourceRoot: String, userRoot: String) {
-    private val modelFactory: SQLModelFactory
-    private val habitList: HabitList
+    val modelFactory: SQLModelFactory
+    val habitList: HabitList
+    val files: IosFileOpener
 
     init {
         setToday(computeToday())
-        val files = IosFileOpener(listOf(resourceRoot), userRoot)
+        registerFonts("$resourceRoot/fonts")
+        files = IosFileOpener(listOf(resourceRoot), userRoot)
         val db = IosDatabaseOpener().open("$userRoot/$DATABASE_FILENAME")
         // Same as HabitsDatabaseOpener.onCreate: a fresh database starts at version 8
         when (db.getVersion()) {

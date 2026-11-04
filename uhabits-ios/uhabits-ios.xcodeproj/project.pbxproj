@@ -3,19 +3,21 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 56;
+	objectVersion = 77;
 	objects = {
 
 /* Begin PBXBuildFile section */
-		A10000000000000000000001 /* UhabitsApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000001 /* UhabitsApp.swift */; };
 		A10000000000000000000002 /* main in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000002 /* main */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		A20000000000000000000001 /* UhabitsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UhabitsApp.swift; sourceTree = "<group>"; };
 		A20000000000000000000002 /* main */ = {isa = PBXFileReference; lastKnownFileType = folder; name = main; path = "../uhabits-core/assets/main"; sourceTree = SOURCE_ROOT; };
 		A20000000000000000000003 /* uhabits-ios.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "uhabits-ios.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		A30000000000000000000002 /* uhabits-ios */ = {isa = PBXFileSystemSynchronizedRootGroup; path = "uhabits-ios"; sourceTree = "<group>"; };
+/* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXGroup section */
 		A30000000000000000000001 = {
@@ -25,14 +27,6 @@
 				A20000000000000000000002 /* main */,
 				A30000000000000000000003 /* Products */,
 			);
-			sourceTree = "<group>";
-		};
-		A30000000000000000000002 /* uhabits-ios */ = {
-			isa = PBXGroup;
-			children = (
-				A20000000000000000000001 /* UhabitsApp.swift */,
-			);
-			path = "uhabits-ios";
 			sourceTree = "<group>";
 		};
 		A30000000000000000000003 /* Products */ = {
@@ -58,6 +52,9 @@
 			);
 			dependencies = (
 			);
+			fileSystemSynchronizedGroups = (
+				A30000000000000000000002 /* uhabits-ios */,
+			);
 			name = "uhabits-ios";
 			productName = "uhabits-ios";
 			productReference = A20000000000000000000003 /* uhabits-ios.app */;
@@ -74,7 +71,6 @@
 				LastUpgradeCheck = 1500;
 			};
 			buildConfigurationList = A70000000000000000000001 /* Build configuration list for PBXProject "uhabits-ios" */;
-			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -82,6 +78,7 @@
 				Base,
 			);
 			mainGroup = A30000000000000000000001;
+			preferredProjectObjectVersion = 77;
 			productRefGroup = A30000000000000000000003 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -125,7 +122,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A10000000000000000000001 /* UhabitsApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
