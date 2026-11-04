@@ -34,6 +34,11 @@ actual fun computeToday(hourOffset: Int, minuteOffset: Int): LocalDate {
     val now = NSDate()
     val nowMillis = (now.timeIntervalSince1970 * 1000).toLong()
     val localMillis = nowMillis + NSTimeZone.defaultTimeZone.secondsFromGMTForDate(now) * 1000L
+    return todayAt(localMillis, hourOffset, minuteOffset)
+}
+
+/** The habit "day" containing [localMillis] (wall-clock ms since epoch), when days start at hourOffset:minuteOffset. */
+fun todayAt(localMillis: Long, hourOffset: Int, minuteOffset: Int): LocalDate {
     val offsetMillis = hourOffset * 3600000L + minuteOffset * 60000L
     val daysSinceEpoch = (localMillis - offsetMillis).floorDiv(86400000L)
     return LocalDate((daysSinceEpoch - 10957).toInt())

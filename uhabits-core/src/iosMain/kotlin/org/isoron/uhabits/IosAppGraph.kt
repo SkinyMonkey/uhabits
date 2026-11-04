@@ -29,7 +29,6 @@ import org.isoron.platform.io.format
 import org.isoron.platform.io.getVersion
 import org.isoron.platform.io.migrateTo
 import org.isoron.platform.io.setVersion
-import org.isoron.platform.time.computeToday
 import org.isoron.platform.time.getToday
 import org.isoron.platform.time.setToday
 import org.isoron.uhabits.core.DATABASE_FILENAME
@@ -67,7 +66,7 @@ class IosAppGraph(resourceRoot: String, userRoot: String) {
     val commandRunner = CommandRunner(taskRunner)
 
     init {
-        setToday(computeToday())
+        setToday(todayFor(preferences))
         registerFonts("$resourceRoot/fonts")
         files = IosFileOpener(listOf(resourceRoot), userRoot)
         val db = IosDatabaseOpener().open("$userRoot/$DATABASE_FILENAME")
@@ -87,7 +86,7 @@ class IosAppGraph(resourceRoot: String, userRoot: String) {
     }
 
     fun habits(): List<HabitItem> {
-        setToday(computeToday()) // ponytail: refreshed on each read instead of a midnight timer
+        setToday(todayFor(preferences)) // ponytail: refreshed on each read instead of a midnight timer
         return habitList.filter { !it.isArchived }.map {
             HabitItem(
                 id = it.id!!,
