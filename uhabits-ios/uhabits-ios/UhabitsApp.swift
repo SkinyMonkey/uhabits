@@ -9,13 +9,20 @@ struct UhabitsApp: App {
     @StateObject private var store = HabitStore()
 
     var body: some Scene {
-        WindowGroup { HabitListView().environmentObject(store) }
+        WindowGroup {
+            // Debug: `-showHabit <id>` opens that habit directly (screenshots without tapping)
+            if let id = Int64(UserDefaults.standard.string(forKey: "showHabit") ?? "") {
+                NavigationStack { ShowHabitView(habitId: id) }.environmentObject(store)
+            } else {
+                HabitListView().environmentObject(store)
+            }
+        }
     }
 }
 
 /// Thin wrapper over the Kotlin graph. All calls are synchronous; the list is re-read after each change.
 final class HabitStore: ObservableObject {
-    private let graph: IosAppGraph
+    let graph: IosAppGraph
     @Published private(set) var habits: [HabitItem] = []
 
     init() {
@@ -27,6 +34,7 @@ final class HabitStore: ObservableObject {
             graph.createHabit(name: "Meditate", colorIndex: 8)
             graph.createHabit(name: "Exercise", colorIndex: 0)
             graph.toggleToday(habitId: graph.habits()[0].id)
+            graph.seedHistory(habitId: graph.habits()[0].id) // 120 days of history + a numerical "Run" habit
         }
         reload()
         print("[uhabits] db=\(docs) habits=\(habits.map { "\($0.name):\($0.checkedToday)" })")
