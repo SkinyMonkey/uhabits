@@ -3,6 +3,9 @@ package org.isoron.platform.io
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.toKString
 import org.isoron.platform.gui.Canvas
+import org.isoron.platform.gui.IosCanvas
+import org.isoron.platform.gui.IosImage
+import org.isoron.platform.gui.registerFonts
 import org.isoron.platform.time.IosLocalDateFormatter
 import org.isoron.platform.time.LocalDateFormatter
 import platform.Foundation.NSLocale
@@ -20,9 +23,10 @@ actual fun createTestDatabaseOpener(): DatabaseOpener = IosDatabaseOpener()
 
 actual suspend fun createTestDatabaseOpenerSuspend(): DatabaseOpener = IosDatabaseOpener()
 
-// ponytail: canvas tests are excluded on iOS (see build.gradle.kts) until IosCanvas exists
-actual fun createTestCanvas(width: Int, height: Int): Canvas = TODO("IosCanvas not implemented yet")
+actual fun createTestCanvas(width: Int, height: Int): Canvas = IosCanvas(IosImage(2 * width, 2 * height), 2.0)
 
 actual fun createTestDateFormatter(): LocalDateFormatter = IosLocalDateFormatter(NSLocale("en_US"))
 
-actual suspend fun ensureFontsLoaded() {}
+private val fontsLoaded by lazy { registerFonts("$assetsDir/main/fonts") }
+
+actual suspend fun ensureFontsLoaded() = fontsLoaded

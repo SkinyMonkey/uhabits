@@ -101,12 +101,8 @@ kotlin {
     }
 }
 
-// ponytail: canvas/chart pixel tests need a CoreGraphics canvas; run them on iOS once IosCanvas exists
 tasks.withType<org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeSimulatorTest> {
     environment("SIMCTL_CHILD_UHABITS_ASSETS", file("assets").absolutePath)
-    filter.excludeTestsMatching("org.isoron.platform.gui.CanvasTest")
-    filter.excludeTestsMatching("org.isoron.uhabits.core.ui.views.HistoryChartTest")
-    filter.excludeTestsMatching("org.isoron.uhabits.core.ui.views.BarChartTest")
 }
 
 mokkery {

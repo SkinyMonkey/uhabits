@@ -26,6 +26,7 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.usePinned
 import org.isoron.platform.gui.Image
+import org.isoron.platform.gui.IosImage
 import platform.Foundation.NSData
 import platform.Foundation.NSFileHandle
 import platform.Foundation.NSFileManager
@@ -42,7 +43,7 @@ import platform.posix.memcpy
 
 private val fm get() = NSFileManager.defaultManager
 
-private fun mkdirsFor(path: String) {
+internal fun mkdirsFor(path: String) {
     @Suppress("CAST_NEVER_SUCCEEDS")
     val parent = (path as NSString).stringByDeletingLastPathComponent
     fm.createDirectoryAtPath(parent, true, null, null)
@@ -83,8 +84,7 @@ class IosResourceFile(private val roots: List<String>, private val path: String)
         }
     }
 
-    // ponytail: decoding PNGs needs a CoreGraphics Image; add with IosCanvas
-    override suspend fun toImage(): Image = TODO("IosImage not implemented yet")
+    override suspend fun toImage(): Image = IosImage.fromPng(resolved)
 }
 
 class IosUserFile(override val pathString: String) : UserFile {
