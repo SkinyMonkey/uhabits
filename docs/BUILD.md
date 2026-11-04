@@ -6,6 +6,7 @@ This page describes how to download and build the app from the source code. If y
 
 * [Build using Android Studio](#build-using-android-studio)
 * [Build from the command line](#build-from-the-command-line)
+* [Build for iPhone](#build-for-iphone)
 
 ## Build using Android Studio
 
@@ -86,3 +87,35 @@ The repository will be downloaded to the directory `uhabits`.
 If the compilation is successful, a debug APK will be generated somewhere inside the folder `uhabits-android/build/`. Currently, the full path is `./uhabits-android/build/outputs/apk/debug/uhabits-android-debug.apk`, but it may change in the future.
 
 The APK can be installed using the tool `adb`, which should have been automatically installed at `/opt/android-sdk/platform-tools/adb` during compilation of the project.
+
+## Build for iPhone
+
+The iPhone app (`uhabits-ios`) is a native SwiftUI app built on the same Kotlin Multiplatform core (`uhabits-core`) as the Android app. It requires **macOS** with **Xcode 26** or newer and **JDK 17**, since Xcode runs Gradle to compile the core into the `UhabitsCore` framework.
+
+### Run in the simulator
+
+1. Open `uhabits-ios/uhabits-ios.xcodeproj` in Xcode.
+2. Select the `uhabits-ios` scheme and an iPhone simulator, then click "Run". The first build takes a few minutes while Gradle compiles the core. If Xcode cannot find Java, make sure `java -version` reports JDK 17 in the environment Xcode is launched from (for example by setting `JAVA_HOME` in `~/.zprofile`).
+
+From the command line:
+```bash
+xcodebuild -project uhabits-ios/uhabits-ios.xcodeproj -scheme uhabits-ios \
+    -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build
+```
+
+### Run on a device
+
+The app and its widget extension share data through the app group `group.org.isoron.uhabits.ios`. To run on a real device, select a development team for both the `uhabits-ios` and `uhabits-iosWidgets` targets, change the bundle identifiers and the app group to ones registered with that team, and update the identifiers in `uhabits-ios.entitlements`, `uhabits-iosWidgets.entitlements` and `IosWidgets.GROUP_ID`.
+
+### Run the tests
+
+```bash
+# Shared core, on the iOS simulator
+./gradlew :uhabits-core:iosSimulatorArm64Test
+
+# App UI tests
+xcodebuild test -project uhabits-ios/uhabits-ios.xcodeproj -scheme uhabits-ios \
+    -destination 'platform=iOS Simulator,name=iPhone 17 Pro'
+```
+
+In debug builds, the app accepts a few launch arguments that are useful for screenshots and testing: `-resetData` starts from an empty database, `-seed` and `-seedFull` create sample habits, and `-showHabit <id>`, `-editHabit <id>`, `-newHabit` and `-openSettings` open a screen directly.
