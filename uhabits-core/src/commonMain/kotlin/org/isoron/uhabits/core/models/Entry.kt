@@ -19,6 +19,8 @@
 package org.isoron.uhabits.core.models
 
 import org.isoron.platform.time.LocalDate
+import kotlin.experimental.ExperimentalObjCName
+import kotlin.native.ObjCName
 
 data class Entry(
     val date: LocalDate,
@@ -57,6 +59,9 @@ data class Entry(
          * Value indicating that the user did not perform the habit, even though they were
          * expected to perform it.
          */
+        // NO is a reserved macro in Objective-C, so export it under another name
+        @OptIn(ExperimentalObjCName::class)
+        @ObjCName("NO_VALUE")
         const val NO = 0
 
         /**

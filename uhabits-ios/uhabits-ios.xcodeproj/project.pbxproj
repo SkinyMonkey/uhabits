@@ -116,7 +116,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "set -e\ncd \"$SRCROOT/..\" && ./gradlew :uhabits-core:embedAndSignAppleFrameworkForXcode\n# Entry.NO (commonMain) collides with the Objective-C NO macro and breaks the header; drop that\n# one declaration until the core annotates it with @ObjCName.\nsed -i '' '/^@property (readonly) int32_t NO /d' \"$SRCROOT/../uhabits-core/build/xcode-frameworks/$CONFIGURATION/$SDK_NAME/UhabitsCore.framework/Headers/UhabitsCore.h\"\n";
+			shellScript = "set -e\ncd \"$SRCROOT/..\" && ./gradlew :uhabits-core:embedAndSignAppleFrameworkForXcode\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
