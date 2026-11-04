@@ -1,10 +1,13 @@
 import SwiftUI
 import UserNotifications
+import WidgetKit
 // Import only what we use: the core also exports View, Color, etc., which clash with SwiftUI
 import class UhabitsCore.IosAppGraph
 import class UhabitsCore.KotlinBooleanArray
 import class UhabitsCore.IosImportExport
 import class UhabitsCore.IosReminders
+import class UhabitsCore.IosWidgetSync
+import class UhabitsCore.IosWidgets
 import class UhabitsCore.Reminder
 import class UhabitsCore.WeekdayList
 
@@ -12,6 +15,7 @@ import class UhabitsCore.WeekdayList
 struct UhabitsApp: App {
     @StateObject private var store = HabitStore()
     @AppStorage("pref_theme") private var theme = 0 // ThemeSwitcher: 0 automatic, 1 dark, 2 light
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some Scene {
         WindowGroup {
@@ -28,6 +32,8 @@ struct UhabitsApp: App {
             .environmentObject(store)
             .environmentObject(store.list)
             .preferredColorScheme(theme == 1 ? .dark : theme == 2 ? .light : nil)
+            // Widgets may have toggled habits while the app was in the background
+            .onChange(of: scenePhase) { if $0 == .active { _ = store.widgets.syncFromWidgets() } }
         }
     }
 }
@@ -37,13 +43,21 @@ final class HabitStore: ObservableObject {
     let graph: IosAppGraph
     let reminders: IosReminders
     let importExport: IosImportExport
+    let widgets: IosWidgetSync
     private let notificationDelegate: NotificationDelegate
     let list: ListHabitsModel
 
     init() {
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].path
+        // The database lives in the app-group container, shared with the widgets (moved from Documents once)
+        let groupId = IosWidgets.companion.GROUP_ID
+        let root = IosWidgets.companion.sharedUserRoot(groupId: groupId, legacyRoot: docs)
         // uhabits-core/assets/main is bundled as the folder reference "main" (migrations/, fonts/)
-        graph = IosAppGraph(resourceRoot: Bundle.main.bundlePath + "/main", userRoot: docs)
+        graph = IosAppGraph(resourceRoot: Bundle.main.bundlePath + "/main", userRoot: root)
+        let sync = IosWidgetSync(graph: graph, groupId: groupId) { WidgetCenter.shared.reloadAllTimelines() }
+        widgets = sync
+        NotificationCenter.default.addObserver(forName: UserDefaults.didChangeNotification, object: UserDefaults.standard,
+                                               queue: .main) { _ in sync.mirrorPreferences(from: .standard) }
         list = ListHabitsModel(graph: graph)
         reminders = IosReminders(graph: graph)
         importExport = IosImportExport(graph: graph)
@@ -77,9 +91,11 @@ final class HabitStore: ObservableObject {
         #endif
         reminders.scheduleAll()
         reload()
-        print("[uhabits] db=\(docs) rows=\(list.snapshot?.rows.count ?? 0)")
+        print("[uhabits] db=\(root) rows=\(list.snapshot?.rows.count ?? 0)")
         #if DEBUG
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [reminders] in reminders.logPending() }
+        // Debug: `-renderWidgets <dir>` writes every widget as PNGs (widgets cannot be added to the home screen by script)
+        if let dir = UserDefaults.standard.string(forKey: "renderWidgets") { Task { @MainActor in WidgetRenderer.renderAll(to: dir) } }
         #endif
     }
 

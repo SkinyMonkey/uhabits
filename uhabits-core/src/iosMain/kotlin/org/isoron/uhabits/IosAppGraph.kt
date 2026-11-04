@@ -47,13 +47,15 @@ import org.isoron.uhabits.core.tasks.TaskRunner
  * The list screen's glue is [IosListHabits].
  *
  * @param resourceRoot bundled copy of uhabits-core/assets/main (contains migrations/)
- * @param userRoot writable directory for the database, e.g. the app's Documents folder
+ * @param userRoot writable directory for the database: the app-group container (see [IosWidgets.sharedUserRoot])
+ * @param preferences defaults to the standard NSUserDefaults; widgets pass the app-group suite
  */
-class IosAppGraph(resourceRoot: String, userRoot: String) {
+class IosAppGraph(resourceRoot: String, userRoot: String, val preferences: Preferences) {
+    constructor(resourceRoot: String, userRoot: String) : this(resourceRoot, userRoot, Preferences(UserDefaultsStorage()))
+
     val modelFactory: SQLModelFactory
     val habitList: HabitList
     val files: IosFileOpener
-    val preferences = Preferences(UserDefaultsStorage())
     val taskRunner: TaskRunner = CoroutineTaskRunner(Dispatchers.Main, Dispatchers.IO)
     val commandRunner = CommandRunner(taskRunner)
 

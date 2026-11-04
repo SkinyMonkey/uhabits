@@ -43,6 +43,7 @@ import sqlite3.sqlite3_bind_int
 import sqlite3.sqlite3_bind_int64
 import sqlite3.sqlite3_bind_null
 import sqlite3.sqlite3_bind_text
+import sqlite3.sqlite3_busy_timeout
 import sqlite3.sqlite3_clear_bindings
 import sqlite3.sqlite3_close
 import sqlite3.sqlite3_column_double
@@ -125,6 +126,8 @@ class IosDatabaseOpener : DatabaseOpener {
             sqlite3_close(db)
             throw RuntimeException("Could not open database $path: $msg")
         }
+        // The app and the widget extension share the file: wait for the other's lock instead of failing with SQLITE_BUSY
+        sqlite3_busy_timeout(db, 5000)
         IosDatabase(db)
     }
 }
