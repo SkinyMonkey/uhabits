@@ -44,7 +44,6 @@ class WidgetBehaviorTest : BaseUnitTest() {
     private lateinit var today: LocalDate
 
     @BeforeTest
-    @Throws(Exception::class)
     override fun setUp() {
         super.setUp()
         habit = fixtures.createEmptyHabit()
