@@ -44,6 +44,7 @@ import org.isoron.uhabits.core.ui.views.toShortString
 import org.isoron.uhabits.core.ui.widgets.WidgetBehavior
 import platform.CoreGraphics.CGBitmapContextCreateImage
 import platform.CoreGraphics.CGImageRelease
+import platform.Foundation.NSBundle
 import platform.Foundation.NSFileManager
 import platform.Foundation.NSUserDefaults
 import platform.UIKit.UIImage
@@ -157,7 +158,13 @@ class IosWidgets(resourceRoot: String, userRoot: String, private val defaults: N
     fun close() = graph.modelFactory.database.close()
 
     companion object {
-        const val GROUP_ID = "group.org.isoron.uhabits.ios"
+        /**
+         * The app group shared with the widgets: "group." + the app's bundle id. Derived at runtime so the
+         * bundle prefix can change per developer team (UHABITS_BUNDLE_PREFIX build setting, also used by the
+         * entitlements). The widget extension's bundle id is the app's plus ".widgets".
+         */
+        val GROUP_ID: String
+            get() = "group." + (NSBundle.mainBundle.bundleIdentifier ?: "org.isoron.uhabits.ios").removeSuffix(".widgets")
         internal const val DATA_VERSION_KEY = "widget_data_version"
         private val DB_FILES = listOf("", "-journal", "-wal", "-shm").map { DATABASE_FILENAME + it }
 

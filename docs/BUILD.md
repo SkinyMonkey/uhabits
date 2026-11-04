@@ -105,7 +105,17 @@ xcodebuild -project uhabits-ios/uhabits-ios.xcodeproj -scheme uhabits-ios \
 
 ### Run on a device
 
-The app and its widget extension share data through the app group `group.org.isoron.uhabits.ios`. To run on a real device, select a development team for both the `uhabits-ios` and `uhabits-iosWidgets` targets, change the bundle identifiers and the app group to ones registered with that team, and update the identifiers in `uhabits-ios.entitlements`, `uhabits-iosWidgets.entitlements` and `IosWidgets.GROUP_ID`.
+Bundle identifiers and the app group derive from the build setting `UHABITS_BUNDLE_PREFIX` (default `org.isoron.uhabits`), so you can sign with your own team without editing the project. Enable Developer Mode on the iPhone (Settings → Privacy & Security; the option appears after Xcode has seen the device), then:
+
+```bash
+xcodebuild -project uhabits-ios/uhabits-ios.xcodeproj -scheme uhabits-ios \
+    -destination 'id=<device UDID>' -allowProvisioningUpdates -allowProvisioningDeviceRegistration \
+    DEVELOPMENT_TEAM=<team ID> UHABITS_BUNDLE_PREFIX=<your.reverse.domain>.uhabits build
+xcrun devicectl device install app --device <device UDID> \
+    <DerivedData>/Build/Products/Debug-iphoneos/uhabits-ios.app
+```
+
+A free (Personal Team) Apple ID cannot use app groups. Add `CODE_SIGN_ENTITLEMENTS=` to the build command to drop them: the app then keeps its data in its own Documents folder, and the widgets show no data. Apps signed with a free team expire after 7 days. On first launch, trust the developer profile in Settings → General → VPN & Device Management.
 
 ### Run the tests
 
